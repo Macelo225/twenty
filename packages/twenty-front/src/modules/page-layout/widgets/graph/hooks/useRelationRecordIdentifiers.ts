@@ -14,14 +14,17 @@ export const useRelationRecordIdentifiers = ({
   recordIds,
   skip = false,
 }: UseRelationRecordIdentifiersParams) => {
+  // Skip if objectNameSingular is empty to avoid errors
+  const shouldSkip = skip || recordIds.length === 0 || !objectNameSingular;
+
   const { records, loading, objectMetadataItem } = useFindManyRecords({
-    objectNameSingular,
+    objectNameSingular: objectNameSingular || 'company', // Fallback to avoid empty string
     filter: {
       id: {
         in: recordIds,
       },
     },
-    skip: skip || recordIds.length === 0,
+    skip: shouldSkip,
   });
 
   const relationRecordIdentifiers = useMemo(() => {
