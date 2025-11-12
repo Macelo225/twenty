@@ -77,8 +77,8 @@ export const ChartGroupByFieldSelectionDropdownContentBase = <
         items: sourceObjectMetadataItem?.fields || [],
         searchQuery,
         getSearchableValues: (item) => [item.label, item.name],
-        // TODO: remove the relation filter once group by is supported for relation fields
-      }).filter((field) => !isFieldRelation(field) && !field.isSystem),
+        // Relations are now supported - grouping by relation ID
+      }).filter((field) => !field.isSystem),
     [sourceObjectMetadataItem?.fields, searchQuery],
   );
 
