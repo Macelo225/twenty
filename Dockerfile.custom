@@ -1,0 +1,17 @@
+# Use a imagem oficial como base
+FROM twentycrm/twenty:latest
+
+# Switch para usuário root temporariamente para fazer modificações
+USER root
+
+# Copiar os arquivos modificados
+COPY --chown=1000:1000 packages/twenty-front/src/modules/command-menu/pages/page-layout/components/dropdown-content/ChartGroupByFieldSelectionDropdownContentBase.tsx \
+     /app/packages/twenty-server/dist/front/static/js/
+
+COPY --chown=1000:1000 packages/twenty-front/src/modules/command-menu/pages/page-layout/components/dropdown-content/ChartFieldSelectionForAggregateOperationDropdownContent.tsx \
+     /app/packages/twenty-server/dist/front/static/js/
+
+# Voltar para usuário não-root
+USER 1000
+
+# Manter o entrypoint e CMD originais

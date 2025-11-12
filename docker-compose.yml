@@ -1,0 +1,172 @@
+version: "3.9"
+
+name: twenty
+
+services:
+  # ============================
+  # Twenty CRM Server
+  # ============================
+  server:
+    image: macelo225/twenty:latest
+    container_name: twenty_server
+    ports:
+      - "3000:3000"
+    environment:
+      # Server URLs
+      SERVER_URL: ${SERVER_URL:-http://localhost:3000}
+      FRONT_BASE_URL: ${FRONT_BASE_URL:-http://localhost:3000}
+
+      # Version
+      APP_VERSION: ${APP_VERSION:-0.32.0}
+
+      # Database - IMPORTANTE: usar o nome do serviço 'db'
+      PG_DATABASE_URL: postgres://twenty:${POSTGRES_PASSWORD:-twenty}@db:5432/default
+
+      # Storage
+      STORAGE_TYPE: local
+      STORAGE_LOCAL_PATH: .local-storage
+
+      # Security
+      APP_SECRET: ${APP_SECRET:-replace_me_with_a_random_string_app_secret}
+      ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET:-replace_me_with_a_random_string_access}
+      LOGIN_TOKEN_SECRET: ${LOGIN_TOKEN_SECRET:-replace_me_with_a_random_string_login}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-replace_me_with_a_random_string_refresh}
+      FILE_TOKEN_SECRET: ${FILE_TOKEN_SECRET:-replace_me_with_a_random_string_refresh}
+
+      # Message Queue (usando Redis)
+      MESSAGE_QUEUE_TYPE: redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+
+      # Email (opcional - configure se precisar)
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:-noreply@example.com}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Twenty}
+      EMAIL_SYSTEM_ADDRESS: ${EMAIL_SYSTEM_ADDRESS:-system@example.com}
+
+      # Feature Flags (ative o que precisar)
+      IS_SIGN_UP_DISABLED: ${IS_SIGN_UP_DISABLED:-false}
+
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - server-local-data:/app/packages/twenty-server/.local-storage
+      - docker-data:/app/docker-data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - twenty-network
+
+  # ============================
+  # Worker (Background Jobs)
+  # ============================
+  worker:
+    image: macelo225/twenty:latest
+    container_name: twenty_worker
+    command: ["yarn", "worker:prod"]
+    environment:
+      # Version
+      APP_VERSION: ${APP_VERSION:-0.32.0}
+
+      # Database - mesmo do server
+      PG_DATABASE_URL: postgres://twenty:${POSTGRES_PASSWORD:-twenty}@db:5432/default
+
+      # Message Queue
+      MESSAGE_QUEUE_TYPE: redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+
+      # Secrets - mesmos do server
+      APP_SECRET: ${APP_SECRET:-replace_me_with_a_random_string_app_secret}
+      ACCESS_TOKEN_SECRET: ${ACCESS_TOKEN_SECRET:-replace_me_with_a_random_string_access}
+      LOGIN_TOKEN_SECRET: ${LOGIN_TOKEN_SECRET:-replace_me_with_a_random_string_login}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-replace_me_with_a_random_string_refresh}
+      FILE_TOKEN_SECRET: ${FILE_TOKEN_SECRET:-replace_me_with_a_random_string_refresh}
+
+      # Storage
+      STORAGE_TYPE: local
+      STORAGE_LOCAL_PATH: .local-storage
+
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - server-local-data:/app/packages/twenty-server/.local-storage
+      - docker-data:/app/docker-data
+    restart: unless-stopped
+    networks:
+      - twenty-network
+
+  # ============================
+  # PostgreSQL Database
+  # ============================
+  db:
+    image: twentycrm/twenty-postgres:latest
+    container_name: twenty_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: twenty
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-twenty}
+      POSTGRES_DB: default
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U twenty -d default"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - twenty-network
+
+  # ============================
+  # Redis (Message Queue & Cache)
+  # ============================
+  redis:
+    image: redis:7-alpine
+    container_name: twenty_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - twenty-network
+
+# ============================
+# Volumes
+# ============================
+volumes:
+  db-data:
+    driver: local
+  redis-data:
+    driver: local
+  server-local-data:
+    driver: local
+  docker-data:
+    driver: local
+
+# ============================
+# Networks
+# ============================
+networks:
+  twenty-network:
+    driver: bridge
