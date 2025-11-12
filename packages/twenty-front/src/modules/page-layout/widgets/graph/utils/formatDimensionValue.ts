@@ -1,4 +1,5 @@
 import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
+import { type ObjectMetadataItem } from '@/object-metadata/types/ObjectMetadataItem';
 import { GRAPH_DEFAULT_DATE_GRANULARITY } from '@/page-layout/widgets/graph/constants/GraphDefaultDateGranularity.constant';
 import { formatDateByGranularity } from '@/page-layout/widgets/graph/utils/formatDateByGranularity';
 import { t } from '@lingui/core/macro';
@@ -15,6 +16,7 @@ type FormatDimensionValueParams = {
   fieldMetadata: FieldMetadataItem;
   dateGranularity?: ObjectRecordGroupByDateGranularity;
   subFieldName?: string;
+  relationRecordIdentifiers?: Map<string, string>;
 };
 
 const normalizeMultiSelectValue = (value: unknown): unknown[] => {
@@ -43,12 +45,23 @@ export const formatDimensionValue = ({
   fieldMetadata,
   dateGranularity = GRAPH_DEFAULT_DATE_GRANULARITY as ObjectRecordGroupByDateGranularity,
   subFieldName,
+  relationRecordIdentifiers,
 }: FormatDimensionValueParams): string => {
   if (!isDefined(value)) {
     return t`Not Set`;
   }
 
   switch (fieldMetadata.type) {
+    case FieldMetadataType.RELATION: {
+      // For relation fields, try to resolve the UUID to a human-readable label
+      const relationId = String(value);
+      if (relationRecordIdentifiers?.has(relationId)) {
+        return relationRecordIdentifiers.get(relationId) ?? relationId;
+      }
+      // Fallback to showing a shortened UUID if we couldn't resolve it
+      return relationId.length > 8 ? `${relationId.substring(0, 8)}...` : relationId;
+    }
+
     case FieldMetadataType.SELECT: {
       const selectedOption = fieldMetadata.options?.find(
         (option) => option.value === value,
