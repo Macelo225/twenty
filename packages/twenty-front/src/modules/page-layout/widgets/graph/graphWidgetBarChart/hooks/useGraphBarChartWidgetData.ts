@@ -84,10 +84,10 @@ export const useGraphBarChartWidgetData = ({
   }, [groupByFields]);
 
   const relationObjectNameSingular = useMemo(() => {
-    if (!relationField?.relationDefinition?.targetObjectMetadata) {
+    if (!relationField?.relation?.targetObjectMetadata) {
       return undefined;
     }
-    return relationField.relationDefinition.targetObjectMetadata.nameSingular;
+    return relationField.relation.targetObjectMetadata.nameSingular;
   }, [relationField]);
 
   // Extract relation IDs from the group-by results
