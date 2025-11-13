@@ -1,5 +1,6 @@
 import { useObjectMetadataItemById } from '@/object-metadata/hooks/useObjectMetadataItemById';
 import { type BarChartDataItem } from '@/page-layout/widgets/graph/graphWidgetBarChart/types/BarChartDataItem';
+import { type BarChartLayout } from '@/page-layout/widgets/graph/graphWidgetBarChart/types/BarChartLayout';
 import { type BarChartSeries } from '@/page-layout/widgets/graph/graphWidgetBarChart/types/BarChartSeries';
 import { useGraphWidgetGroupByQuery } from '@/page-layout/widgets/graph/hooks/useGraphWidgetGroupByQuery';
 import { useRelationRecordIdentifiers } from '@/page-layout/widgets/graph/hooks/useRelationRecordIdentifiers';
@@ -24,7 +25,7 @@ type UseGraphBarChartWidgetDataResult = {
   xAxisLabel?: string;
   yAxisLabel?: string;
   showDataLabels: boolean;
-  layout?: 'vertical' | 'horizontal';
+  layout?: BarChartLayout;
   loading: boolean;
   error?: Error;
   hasTooManyGroups: boolean;
