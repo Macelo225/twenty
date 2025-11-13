@@ -22,6 +22,7 @@ type TransformGroupByDataToBarChartDataParams = {
   objectMetadataItem: ObjectMetadataItem;
   configuration: BarChartConfiguration;
   aggregateOperation: string;
+  relationRecordIdentifiers?: Map<string, string>;
 };
 
 type TransformGroupByDataToBarChartDataResult = {
@@ -53,6 +54,7 @@ export const transformGroupByDataToBarChartData = ({
   objectMetadataItem,
   configuration,
   aggregateOperation,
+  relationRecordIdentifiers,
 }: TransformGroupByDataToBarChartDataParams): TransformGroupByDataToBarChartDataResult => {
   if (!isDefined(groupByData)) {
     return EMPTY_BAR_CHART_RESULT;
@@ -149,6 +151,7 @@ export const transformGroupByDataToBarChartData = ({
         aggregateOperation,
         objectMetadataItem,
         primaryAxisSubFieldName,
+        relationRecordIdentifiers,
       })
     : transformOneDimensionalGroupByToBarChartData({
         rawResults: filteredResults,
@@ -158,6 +161,7 @@ export const transformGroupByDataToBarChartData = ({
         aggregateOperation,
         objectMetadataItem,
         primaryAxisSubFieldName,
+        relationRecordIdentifiers,
       });
 
   const layout =

@@ -15,6 +15,7 @@ type FormatDimensionValueParams = {
   fieldMetadata: FieldMetadataItem;
   dateGranularity?: ObjectRecordGroupByDateGranularity;
   subFieldName?: string;
+  relationRecordIdentifiers?: Map<string, string>;
 };
 
 const normalizeMultiSelectValue = (value: unknown): unknown[] => {
@@ -43,6 +44,7 @@ export const formatDimensionValue = ({
   fieldMetadata,
   dateGranularity = GRAPH_DEFAULT_DATE_GRANULARITY as ObjectRecordGroupByDateGranularity,
   subFieldName,
+  relationRecordIdentifiers,
 }: FormatDimensionValueParams): string => {
   if (!isDefined(value)) {
     return t`Not Set`;
@@ -105,6 +107,15 @@ export const formatDimensionValue = ({
         return String(value);
       }
       return formatToShortNumber(numericValue);
+    }
+
+    case FieldMetadataType.RELATION: {
+      const relationId = String(value);
+      if (relationRecordIdentifiers?.has(relationId)) {
+        return relationRecordIdentifiers.get(relationId) ?? relationId;
+      }
+      // Fallback to shortened UUID
+      return relationId.length > 8 ? `${relationId.substring(0, 8)}...` : relationId;
     }
 
     default:
