@@ -120,6 +120,15 @@ export const formatDimensionValue = ({
       return formatToShortNumber(numericValue);
     }
 
+    case FieldMetadataType.RELATION: {
+      const relationId = String(value);
+      if (relationRecordIdentifiers?.has(relationId)) {
+        return relationRecordIdentifiers.get(relationId) ?? relationId;
+      }
+      // Fallback to shortened UUID
+      return relationId.length > 8 ? `${relationId.substring(0, 8)}...` : relationId;
+    }
+
     default:
       return String(value);
   }

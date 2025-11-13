@@ -1,16 +1,16 @@
-import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
-import { type GroupByRawResult } from '@/page-layout/widgets/graph/types/GroupByRawResult';
-import { FieldMetadataType } from 'twenty-shared/types';
+import { FieldMetadataType } from '~/generated-metadata/graphql';
 import { isDefined } from 'twenty-shared/utils';
+import { type FieldMetadataItem } from '@/object-metadata/types/FieldMetadataItem';
+
+type GroupByRawResult = {
+  groupByDimensionValues: (string | number | null)[];
+};
 
 type ExtractRelationIdsFromGroupByResultsParams = {
   rawResults: GroupByRawResult[];
   groupByFields: FieldMetadataItem[];
 };
 
-/**
- * Extracts all relation IDs from group-by results based on which dimensions are relation fields
- */
 export const extractRelationIdsFromGroupByResults = ({
   rawResults,
   groupByFields,
@@ -23,11 +23,9 @@ export const extractRelationIdsFromGroupByResults = ({
 
     dimensionValues.forEach((value, index) => {
       const field = groupByFields[index];
-
-      // Check if this dimension corresponds to a relation field
       if (field?.type === FieldMetadataType.RELATION && isDefined(value)) {
         const idValue = String(value);
-        // Basic UUID validation (36 chars with hyphens)
+        // Basic UUID validation
         if (idValue.length === 36 && idValue.includes('-')) {
           relationIds.add(idValue);
         }

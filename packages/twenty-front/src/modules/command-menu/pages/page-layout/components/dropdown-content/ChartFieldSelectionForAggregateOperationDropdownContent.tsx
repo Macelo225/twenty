@@ -59,7 +59,6 @@ export const ChartFieldSelectionForAggregateOperationDropdownContent = () => {
     items: sourceObjectMetadataItem?.fields || [],
     searchQuery,
     getSearchableValues: (item) => [item.label, item.name],
-    // Relations are now supported - can aggregate by counting relations
   }).filter((field) => !field.isSystem);
 
   const { getIcon } = useIcons();

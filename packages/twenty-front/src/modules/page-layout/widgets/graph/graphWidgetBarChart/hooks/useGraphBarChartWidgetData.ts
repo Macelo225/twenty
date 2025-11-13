@@ -1,15 +1,14 @@
 import { useObjectMetadataItemById } from '@/object-metadata/hooks/useObjectMetadataItemById';
 import { type BarChartDataItem } from '@/page-layout/widgets/graph/graphWidgetBarChart/types/BarChartDataItem';
-import { type BarChartLayout } from '@/page-layout/widgets/graph/graphWidgetBarChart/types/BarChartLayout';
 import { type BarChartSeries } from '@/page-layout/widgets/graph/graphWidgetBarChart/types/BarChartSeries';
 import { useGraphWidgetGroupByQuery } from '@/page-layout/widgets/graph/hooks/useGraphWidgetGroupByQuery';
 import { useRelationRecordIdentifiers } from '@/page-layout/widgets/graph/hooks/useRelationRecordIdentifiers';
 import { extractRelationIdsFromGroupByResults } from '@/page-layout/widgets/graph/utils/extractRelationIdsFromGroupByResults';
-import { getGroupByQueryName } from '@/page-layout/utils/getGroupByQueryName';
 import { transformGroupByDataToBarChartData } from '@/page-layout/widgets/graph/utils/transformGroupByDataToBarChartData';
+import { getGroupByQueryName } from '@/page-layout/utils/getGroupByQueryName';
 import { useMemo } from 'react';
-import { FieldMetadataType } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
+import { FieldMetadataType } from '~/generated-metadata/graphql';
 import { type BarChartConfiguration } from '~/generated/graphql';
 
 type UseGraphBarChartWidgetDataProps = {
@@ -25,7 +24,7 @@ type UseGraphBarChartWidgetDataResult = {
   xAxisLabel?: string;
   yAxisLabel?: string;
   showDataLabels: boolean;
-  layout?: BarChartLayout;
+  layout?: 'vertical' | 'horizontal';
   loading: boolean;
   error?: Error;
   hasTooManyGroups: boolean;
@@ -49,41 +48,37 @@ export const useGraphBarChartWidgetData = ({
     configuration,
   });
 
-  // Extract group-by fields to check if they are relations
-  const groupByFieldX = useMemo(
-    () =>
-      objectMetadataItem.fields.find(
-        (field) =>
-          field.id === configuration.primaryAxisGroupByFieldMetadataId,
-      ),
-    [objectMetadataItem, configuration.primaryAxisGroupByFieldMetadataId],
-  );
-
-  const groupByFieldY = useMemo(
-    () =>
-      isDefined(configuration.secondaryAxisGroupByFieldMetadataId)
-        ? objectMetadataItem.fields.find(
-            (field) =>
-              field.id === configuration.secondaryAxisGroupByFieldMetadataId,
-          )
-        : undefined,
-    [objectMetadataItem, configuration.secondaryAxisGroupByFieldMetadataId],
-  );
-
+  // Determine group-by fields for relation resolution
   const groupByFields = useMemo(() => {
     const fields = [];
-    if (groupByFieldX) fields.push(groupByFieldX);
-    if (groupByFieldY) fields.push(groupByFieldY);
-    return fields;
-  }, [groupByFieldX, groupByFieldY]);
 
-  // Check if any group-by field is a relation and get the related object name
+    if (configuration.primaryAxisGroupByFieldMetadataId) {
+      const primaryField = objectMetadataItem?.fields.find(
+        (f) => f.id === configuration.primaryAxisGroupByFieldMetadataId,
+      );
+      if (primaryField) fields.push(primaryField);
+    }
+
+    if (configuration.secondaryAxisGroupByFieldMetadataId) {
+      const secondaryField = objectMetadataItem?.fields.find(
+        (f) => f.id === configuration.secondaryAxisGroupByFieldMetadataId,
+      );
+      if (secondaryField) fields.push(secondaryField);
+    }
+
+    return fields;
+  }, [
+    objectMetadataItem,
+    configuration.primaryAxisGroupByFieldMetadataId,
+    configuration.secondaryAxisGroupByFieldMetadataId,
+  ]);
+
+  // Find the first relation field (we only support one for now)
   const relationField = useMemo(() => {
-    return groupByFields.find(
-      (field) => field.type === FieldMetadataType.RELATION,
-    );
+    return groupByFields.find((field) => field.type === FieldMetadataType.RELATION);
   }, [groupByFields]);
 
+  // Get the target object name for the relation
   const relationObjectNameSingular = useMemo(() => {
     if (!relationField?.relation?.targetObjectMetadata) {
       return undefined;
@@ -91,7 +86,7 @@ export const useGraphBarChartWidgetData = ({
     return relationField.relation.targetObjectMetadata.nameSingular;
   }, [relationField]);
 
-  // Extract relation IDs from the group-by results
+  // Extract relation IDs from query results
   const relationIds = useMemo(() => {
     if (!isDefined(groupByData) || !relationObjectNameSingular) {
       return [];
@@ -127,13 +122,7 @@ export const useGraphBarChartWidgetData = ({
         aggregateOperation,
         relationRecordIdentifiers,
       }),
-    [
-      groupByData,
-      objectMetadataItem,
-      configuration,
-      aggregateOperation,
-      relationRecordIdentifiers,
-    ],
+    [groupByData, objectMetadataItem, configuration, aggregateOperation, relationRecordIdentifiers],
   );
 
   return {

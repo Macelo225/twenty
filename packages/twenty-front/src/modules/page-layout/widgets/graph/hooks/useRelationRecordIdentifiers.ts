@@ -1,5 +1,5 @@
-import { getObjectRecordIdentifier } from '@/object-metadata/utils/getObjectRecordIdentifier';
 import { useFindManyRecords } from '@/object-record/hooks/useFindManyRecords';
+import { getObjectRecordIdentifier } from '@/object-record/utils/getObjectRecordIdentifier';
 import { useMemo } from 'react';
 import { isDefined } from 'twenty-shared/utils';
 
@@ -14,7 +14,6 @@ export const useRelationRecordIdentifiers = ({
   recordIds,
   skip = false,
 }: UseRelationRecordIdentifiersParams) => {
-  // Skip if objectNameSingular is empty to avoid errors
   const shouldSkip = skip || recordIds.length === 0 || !objectNameSingular;
 
   const { records, loading, objectMetadataItem } = useFindManyRecords({
@@ -33,7 +32,6 @@ export const useRelationRecordIdentifiers = ({
     }
 
     const identifiersMap = new Map<string, string>();
-
     records.forEach((record) => {
       const identifier = getObjectRecordIdentifier({
         objectMetadataItem,
